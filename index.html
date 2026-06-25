@@ -3,11 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Super Labirinto Hardcore - Agrinho</title>
+    <title>Labirinto Claustrofóbico Hardcore</title>
     <style>
         body {
             margin: 0;
-            background-color: #0b5394; /* Fundo azul estilo blueprint */
+            background-color: #0b5394;
             background-image: linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px),
                               linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px);
             background-size: 20px 20px;
@@ -21,19 +21,19 @@
             min-height: 100vh;
             overflow-x: hidden;
             touch-action: none;
-            padding-top: 20px;
+            padding-top: 15px;
         }
         
-        /* Painel de Status no topo */
         #painel-status {
             text-align: center;
             text-shadow: 2px 2px #000;
-            font-size: 18px;
-            margin-bottom: 15px;
+            font-size: 16px;
+            margin-bottom: 10px;
         }
-        #painel-status h2 { margin: 0 0 5px 0; color: #fff; font-size: 22px; }
+        #painel-status h2 { margin: 0 0 5px 0; color: #fff; font-size: 20px; }
 
         #area-canvas {
+            position: relative;
             display: flex;
             justify-content: center;
             width: 100%;
@@ -46,109 +46,152 @@
             max-width: 95vw;
             max-height: 50vh;
         }
+
+        /* Menu de Pausa (Sobreposição escurecida) */
+        #menu-pausa, #menu-niveis {
+            display: none;
+            position: absolute;
+            top: 6px; left: 6px;
+            width: calc(100% - 12px);
+            height: calc(100% - 12px);
+            background-color: rgba(0, 0, 0, 0.75);
+            box-sizing: border-box;
+            z-index: 10;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .btn-menu {
+            background-color: #1e293b;
+            border: 2px solid #64748b;
+            color: white;
+            font-family: monospace;
+            font-weight: bold;
+            padding: 10px 20px;
+            margin: 8px;
+            cursor: pointer;
+            width: 220px;
+            text-align: center;
+            box-shadow: 0 4px 0 #0f172a;
+        }
+        .btn-menu:active { transform: translateY(2px); box-shadow: 0 2px 0 #0f172a; }
+
+        /* Grid de Seleção de Níveis */
+        #grid-niveis {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 10px;
+            max-height: 70%;
+            overflow-y: auto;
+            padding: 10px;
+        }
+        .item-nivel {
+            background-color: #334155;
+            border: 2px solid #475569;
+            padding: 5px;
+            text-align: center;
+            cursor: pointer;
+            font-size: 12px;
+        }
+        .moedas-status {
+            display: flex;
+            justify-content: center;
+            gap: 2px;
+            margin-top: 3px;
+        }
+        .quadradinho-moeda {
+            width: 8px;
+            height: 8px;
+            background-color: #64748b; /* Cinza inicial */
+        }
+        .quadradinho-moeda.coletado {
+            background-color: #eab308; /* Amarelo se pego */
+        }
         
-        /* Área dos Controles - Totalmente fora e abaixo do campo de jogo */
         #zona-controles {
             display: flex;
             justify-content: space-between;
             align-items: center;
             width: 100%;
             max-width: 850px;
-            margin-top: 25px;
+            margin-top: 15px;
             padding: 0 20px;
             box-sizing: border-box;
         }
 
-        /* Joystick de Movimentação (D-PAD) */
-        #dpad {
-            position: relative;
-            width: 150px;
-            height: 150px;
-        }
+        #dpad { position: relative; width: 140px; height: 140px; }
         .btn-dpad {
             position: absolute;
             background-color: #1e293b;
             border: 3px solid #475569;
             border-radius: 8px;
             color: white;
-            font-size: 22px;
+            font-size: 20px;
             display: flex;
             align-items: center;
             justify-content: center;
-            width: 45px;
-            height: 45px;
+            width: 42px;
+            height: 42px;
             user-select: none;
             box-shadow: 0 4px 0px #0f172a;
         }
-        .btn-dpad:active {
-            background-color: #475569;
-            transform: translateY(4px);
-            box-shadow: none;
-        }
-        #btn-up { top: 0; left: 52px; }
-        #btn-left { top: 52px; left: 0; }
-        #btn-right { top: 52px; left: 104px; }
-        #btn-down { top: 104px; left: 52px; }
+        .btn-dpad:active { background-color: #475569; transform: translateY(4px); box-shadow: none; }
+        #btn-up { top: 0; left: 49px; }
+        #btn-left { top: 49px; left: 0; }
+        #btn-right { top: 49px; left: 98px; }
+        #btn-down { top: 98px; left: 49px; }
 
-        /* Painel de Botões de Ação */
-        #paineis-acao {
-            position: relative;
-            width: 160px;
-            height: 130px;
-        }
+        #paineis-acao { position: relative; width: 150px; height: 120px; }
         .btn-acao {
             position: absolute;
-            background-color: #b91c1c; /* Vermelho para destacar ação */
-            border: 3px solid #7f1d1d;
-            border-radius: 50%; /* Redondos estilo controle clássico */
+            border-radius: 50%;
             color: white;
-            font-size: 12px;
+            font-size: 11px;
             font-family: monospace;
             font-weight: bold;
             display: flex;
             align-items: center;
             justify-content: center;
-            width: 55px;
-            height: 55px;
+            width: 52px;
+            height: 52px;
             user-select: none;
-            box-shadow: 0 4px 0px #450a0a;
+            box-shadow: 0 4px 0px rgba(0,0,0,0.4);
         }
-        .btn-acao:active {
-            background-color: #ef4444;
-            transform: translateY(4px);
-            box-shadow: none;
-        }
-        #btn-acao1 { bottom: 10px; left: 10px; background-color: #b91c1c; border-color: #7f1d1d;}
-        #btn-acao2 { top: 10px; right: 10px; background-color: #047857; border-color: #064e3b; box-shadow: 0 4px 0px #022c22;} /* Verde */
-        #btn-acao2:active { background-color: #10b981; }
+        .btn-acao:active { transform: translateY(4px); box-shadow: none; }
+        #btn-acao1 { bottom: 5px; left: 5px; background-color: #b91c1c; border: 3px solid #7f1d1d; }
+        #btn-acao2 { top: 5px; right: 5px; background-color: #047857; border: 3px solid #064e3b; }
 
-        /* Responsividade */
         @media (max-width: 600px) {
-            #zona-controles {
-                max-width: 100%;
-                padding: 0 10px;
-            }
-            #dpad { width: 130px; height: 130px; }
-            .btn-dpad { width: 40px; height: 40px; font-size: 18px; }
-            #btn-up { left: 45px; }
-            #btn-left { top: 45px; }
-            #btn-right { top: 45px; left: 90px; }
-            #btn-down { top: 90px; left: 45px; }
-            
-            .btn-acao { width: 50px; height: 50px; }
-            #paineis-acao { width: 130px; }
+            #zona-controles { padding: 0 10px; }
+            #dpad { width: 120px; height: 120px; }
+            .btn-dpad { width: 36px; height: 36px; }
+            #btn-up { left: 42px; } #btn-left { top: 42px; } #btn-right { top: 42px; left: 84px; } #btn-down { top: 84px; left: 42px; }
         }
     </style>
 </head>
 <body>
 
     <div id="painel-status">
-        <h2 id="titulo-topo">LABIRINTO INSANO: NÍVEL 1/10</h2>
-        <div>NÍVEL: <span id="txt-nivel">1/10</span> | VIDAS: <span id="txt-vidas">3</span></div>
+        <h2 id="titulo-topo">LABIRINTO CLAUSTRÓFOBICO</h2>
+        <div>NÍVEL: <span id="txt-nivel">1/25</span> | MOEDAS TOTAIS: <span id="txt-moedas">0</span></div>
     </div>
 
     <div id="area-canvas">
         <canvas id="gameCanvas" width="850" height="460"></canvas>
+        
+        <div id="menu-pausa">
+            <h3 style="color:#059669; font-size:24px; margin-bottom:15px;">MENU DE PAUSA</h3>
+            <div class="btn-menu" id="m-btn-niveis">SELECIONAR NÍVEL</div>
+            <div class="btn-menu" id="m-btn-skills">ÁRVORE DE HABILIDADE</div>
+            <div class="btn-menu" id="m-btn-voltar" style="background-color:#059669;">CONTINUAR JOGO</div>
+        </div>
+
+        <div id="menu-niveis">
+            <h3 style="color:#38bdf8; font-size:20px; margin-bottom:10px;">SELEÇÃO DE NÍVEIS</h3>
+            <div id="grid-niveis"></div>
+            <div class="btn-menu" id="m-btn-fechar-niveis" style="width:120px; background-color:#b91c1c;">VOLTAR</div>
+        </div>
     </div>
     
     <div id="zona-controles">
