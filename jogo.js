@@ -2,168 +2,155 @@ const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
 
 const txtNivel = document.getElementById("txt-nivel");
-const txtVidas = document.getElementById("txt-vidas");
+const txtMoedas = document.getElementById("txt-moedas");
 const tituloTopo = document.getElementById("titulo-topo");
 
+// Menus DOM
+const menuPausa = document.getElementById("menu-pausa");
+const menuNiveis = document.getElementById("menu-niveis");
+const gridNiveis = document.getElementById("grid-niveis");
+
 let levelAtual = 0;
-let vidas = 3;
+let moedasGlobais = 0;
+let jogoPausado = false;
 
-let jogador = {
-    x: 40,
-    y: 40,
-    tamanho: 20,
-    cor: "#fadb14",
-    velocidade: 4.5
-};
+// Jogador menor (14px) para navegar em túneis claustrofóbicos e apertados
+let jogador = { x: 25, y: 25, tamanho: 14, cor: "#fadb14", velocidade: 3.5 };
+let objetivo = { x: 805, y: 415, tamanho: 25 };
 
-// Ponto de Chegada (Cubo Dourado)
-let objetivo = { x: 780, y: 390, tamanho: 30 };
-
-// 10 NÍVEIS REMODELADOS COM ALTA DIFICULDADE
-const niveis = [
-    { // Nível 1: Introdução ao Perigo Avançado
-        paredes: [{ x: 300, y: 0, w: 40, h: 320 }],
-        perigos: [
-            { x: 450, y: 100, w: 40, h: 40, vx: 0, vy: 5, cor: "#e53e3e" },
-            { x: 620, y: 250, w: 40, h: 40, vx: 0, vy: -5, cor: "#e53e3e" }
-        ]
-    },
-    { // Nível 2: O Duplo bloqueio Móvel
-        paredes: [{ x: 200, y: 140, w: 50, h: 320 }, { x: 550, y: 0, w: 50, h: 320 }],
-        perigos: [
-            { x: 380, y: 50, w: 35, h: 35, vx: 5, vy: 0, cor: "#3182ce" },
-            { x: 380, y: 400, w: 35, h: 35, vx: -5, vy: 0, cor: "#3182ce" }
-        ]
-    },
-    { // Nível 3: Labirinto zigue-zague com Patrulha
-        paredes: [
-            { x: 220, y: 0, w: 40, h: 350 },
-            { x: 440, y: 110, w: 40, h: 350 },
-            { x: 660, y: 0, w: 40, h: 350 }
-        ],
-        perigos: [
-            { x: 100, y: 380, w: 30, h: 30, vx: 0, vy: -6, cor: "#e53e3e" },
-            { x: 320, y: 50, w: 30, h: 30, vx: 0, vy: 6, cor: "#e53e3e" },
-            { x: 540, y: 380, w: 30, h: 30, vx: 0, vy: -6, cor: "#3182ce" }
-        ]
-    },
-    { // Nível 4: Corredor da Morte
-        paredes: [
-            { x: 150, y: 120, w: 550, h: 40 },
-            { x: 150, y: 280, w: 550, h: 40 }
-        ],
-        perigos: [
-            { x: 200, y: 200, w: 30, h: 30, vx: 8, vy: 0, cor: "#e53e3e" },
-            { x: 600, y: 200, w: 30, h: 30, vx: -8, vy: 0, cor: "#3182ce" }
-        ]
-    },
-    { // Nível 5: Paredes Alternadas e Divisórias
-        paredes: [
-            { x: 150, y: 0, w: 30, h: 220 }, { x: 150, y: 300, w: 30, h: 160 },
-            { x: 350, y: 120, w: 30, h: 340 },
-            { x: 580, y: 0, w: 30, h: 300 }
-        ],
-        perigos: [
-            { x: 230, y: 50, w: 40, h: 40, vx: 0, vy: 7, cor: "#e53e3e" },
-            { x: 450, y: 400, w: 40, h: 40, vx: 0, vy: -7, cor: "#3182ce" }
-        ]
-    },
-    { // Nível 6: Zona Semi-Invisível Avançada
-        paredes: [{ x: 400, y: 100, w: 40, h: 260 }],
-        perigos: [
-            { x: 150, y: 0, w: 120, h: 360, vx: 0, vy: 0, cor: "rgba(229, 62, 62, 0.15)" },
-            { x: 500, y: 100, w: 120, h: 360, vx: 0, vy: 0, cor: "rgba(49, 130, 206, 0.15)" },
-            { x: 300, y: 200, w: 30, h: 30, vx: 0, vy: 8, cor: "#e53e3e" }
-        ]
-    },
-    { // Nível 7: Campo Minado de Velocidade
-        paredes: [],
-        perigos: [
-            { x: 200, y: 20, w: 35, h: 35, vx: 0, vy: 10, cor: "#e53e3e" },
-            { x: 350, y: 400, w: 35, h: 35, vx: 0, vy: -11, cor: "#3182ce" },
-            { x: 500, y: 20, w: 35, h: 35, vx: 0, vy: 12, cor: "#e53e3e" },
-            { x: 650, y: 400, w: 35, h: 35, vx: 0, vy: -13, cor: "#3182ce" }
-        ]
-    },
-    { // Nível 8: Labirinto de Paredes Invisíveis
-        paredes: [{ x: 400, y: 0, w: 50, h: 460 }],
-        perigos: [
-            { x: 0, y: 160, w: 300, h: 50, vx: 0, vy: 0, cor: "rgba(229, 62, 62, 0.12)" },
-            { x: 100, y: 300, w: 300, h: 50, vx: 0, vy: 0, cor: "rgba(229, 62, 62, 0.12)" },
-            { x: 480, y: 200, w: 300, h: 60, vx: 0, vy: 0, cor: "rgba(49, 130, 206, 0.12)" },
-            { x: 550, y: 50, w: 30, h: 30, vx: 6, vy: 0, cor: "#e53e3e" }
-        ]
-    },
-    { // Nível 9: Funil Estreito Estático e Móvel
-        paredes: [
-            { x: 0, y: 140, w: 750, h: 40 },
-            { x: 100, y: 280, w: 750, h: 40 }
-        ],
-        perigos: [
-            { x: 400, y: 195, w: 45, h: 75, vx: -5, vy: 0, cor: "#e53e3e" },
-            { x: 200, y: 195, w: 45, h: 75, vx: 5, vy: 0, cor: "#3182ce" }
-        ]
-    },
-    { // Nível 10: O Labirinto do Caos Final
-        paredes: [
-            { x: 200, y: 0, w: 40, h: 340 },
-            { x: 420, y: 120, w: 40, h: 340 },
-            { x: 640, y: 0, w: 40, h: 340 }
-        ],
-        perigos: [
-            { x: 80, y: 200, w: 35, h: 35, vx: 0, vy: 9, cor: "#e53e3e" },
-            { x: 280, y: 80, w: 35, h: 35, vx: 0, vy: -9, cor: "#3182ce" },
-            { x: 500, y: 380, w: 35, h: 35, vx: 0, vy: 10, cor: "#e53e3e" },
-            { x: 720, y: 50, w: 35, h: 35, vx: 4, vy: 8, cor: "#3182ce" },
-            { x: 450, y: 0, w: 150, h: 40, vx: 0, vy: 0, cor: "rgba(229, 62, 62, 0.15)" }
-        ]
+// GERADOR DE 25 NÍVEIS HIPER APERTADOS E DIFÍCEIS
+// Cada nível possui exatamente 3 moedas fixas locais
+const niveis = [];
+for (let i = 0; i < 25; i++) {
+    let perigosLocais = [];
+    let paredesLocais = [];
+    
+    // Níveis ímpares ganham paredes horizontais restritivas, pares ganham verticais
+    if (i % 2 === 0) {
+        paredesLocais.push({ x: 150 + (i*15)%300, y: 0, w: 35, h: 360 });
+        paredesLocais.push({ x: 450 + (i*20)%250, y: 100, w: 35, h: 360 });
+    } else {
+        paredesLocais.push({ x: 0, y: 120 + (i*10)%120, w: 700, h: 35 });
+        paredesLocais.push({ x: 150, y: 280 + (i*8)%100, w: 700, h: 35 });
     }
-];
 
-// Configuração de Eventos das Teclas (Computador)
+    // Adicionando obstáculos assassinos móveis ou semi-invisíveis progressivos
+    if (i > 5) {
+        perigosLocais.push({ x: 300, y: 50, w: 25, h: 25, vx: 0, vy: 4 + (i%5), cor: "#e53e3e" });
+    }
+    if (i > 12) {
+        perigosLocais.push({ x: 600, y: 200, w: 25, h: 25, vx: 3 + (i%4), vy: 0, cor: "#3182ce" });
+    }
+    if (i > 18) { // Zonas invisíveis sufocantes nos níveis finais
+        perigosLocais.push({ x: i*10, y: 150, w: 180, h: 45, vx: 0, vy: 0, cor: "rgba(229,62,62,0.18)" });
+    }
+
+    // Criação de 3 posições de moedas variadas e distantes por nível
+    let moedasLocais = [
+        { id: 0, x: 200 + (i * 20) % 200, y: 60 + (i * 15) % 300, coletada: false, tamanho: 10 },
+        { id: 1, x: 400 + (i * 10) % 200, y: 200 + (i * 5) % 200, coletada: false, tamanho: 10 },
+        { id: 2, x: 650 + (i * 5) % 100, y: 80 + (i * 12) % 300, coletada: false, tamanho: 10 }
+    ];
+
+    niveis.push({
+        paredes: paredesLocais,
+        perigos: perigosLocais,
+        moedas: moedasLocais
+    });
+}
+
+// Controles unificados
 let teclas = {};
-window.addEventListener("keydown", e => teclas[e.code] = true);
+window.addEventListener("keydown", e => { if(!jogoPausado) teclas[e.code] = true; });
 window.addEventListener("keyup", e => teclas[e.code] = false);
 
-// Joystick Virtual Móvel (Fora do Canvas)
 let toques = { up: false, down: false, left: false, right: false };
-configurarBotao("btn-up", "up");
-configurarBotao("btn-down", "down");
-configurarBotao("btn-left", "left");
-configurarBotao("btn-right", "right");
+configurarBotao("btn-up", "up"); configurarBotao("btn-down", "down");
+configurarBotao("btn-left", "left"); configurarBotao("btn-right", "right");
 
 function configurarBotao(id, direcao) {
     const btn = document.getElementById(id);
-    btn.addEventListener("pointerdown", (e) => { e.preventDefault(); toques[direcao] = true; });
+    btn.addEventListener("pointerdown", (e) => { e.preventDefault(); if(!jogoPausado) toques[direcao] = true; });
     btn.addEventListener("pointerup", (e) => { e.preventDefault(); toques[direcao] = false; });
     btn.addEventListener("pointerleave", (e) => { e.preventDefault(); toques[direcao] = false; });
 }
 
-// Botões de Ação Auxiliares (Preparados para expansões de mecânicas)
-document.getElementById("btn-acao1").addEventListener("pointerdown", (e) => e.preventDefault());
-document.getElementById("btn-acao2").addEventListener("pointerdown", (e) => e.preventDefault());
+// Botão AÇÃO 2: Controla a abertura do Menu de Pausa
+document.getElementById("btn-acao2").addEventListener("pointerdown", (e) => {
+    e.preventDefault();
+    alternarMenuPausa();
+});
+
+// Ações internas do Menu
+document.getElementById("m-btn-voltar").onclick = alternarMenuPausa;
+document.getElementById("m-btn-niveis").onclick = abrirMenuNiveis;
+document.getElementById("m-btn-fechar-niveis").onclick = fecharMenuNiveis;
+document.getElementById("m-btn-skills").onclick = () => alert("Árvore de Habilidade (Em Breve!)");
+
+function alternarMenuPausa() {
+    jogoPausado = !jogoPausado;
+    menuPausa.style.display = jogoPausado ? "flex" : "none";
+    if(!jogoPausado) menuNiveis.style.display = "none";
+    // Zera os movimentos vigentes ao pausar
+    teclas = {}; toques = { up: false, down: false, left: false, right: false };
+}
+
+function abrirMenuNiveis() {
+    menuPausa.style.display = "none";
+    menuNiveis.style.display = "flex";
+    renderizarListaNiveis();
+}
+
+function fecharMenuNiveis() {
+    menuNiveis.style.display = "none";
+    menuPausa.style.display = "flex";
+}
+
+// Constrói visualmente o Menu de Níveis com os quadradinhos cinzas/amarelos das moedas
+function renderizarListaNiveis() {
+    gridNiveis.innerHTML = "";
+    niveis.forEach((lvl, index) => {
+        const item = document.createElement("div");
+        item.className = "item-nivel";
+        item.innerHTML = `<div>NIV ${index + 1}</div>`;
+        
+        // Área dos 3 quadradinhos sob o nível
+        const containerMoedas = document.createElement("div");
+        containerMoedas.className = "moedas-status";
+        
+        lvl.moedas.forEach(m => {
+            const quad = document.createElement("div");
+            quad.className = `quadradinho-moeda ${m.coletada ? "coletado" : ""}`;
+            containerMoedas.appendChild(quad);
+        });
+        
+        item.appendChild(containerMoedas);
+        
+        // Clique para teletransportar de nível através do menu
+        item.onclick = () => {
+            levelAtual = index;
+            atualizarInterfaceTexto();
+            resetJogador();
+            alternarMenuPausa();
+        };
+        
+        gridNiveis.appendChild(item);
+    });
+}
 
 function resetJogador() {
-    jogador.x = 40;
-    jogador.y = 40;
+    jogador.x = 25;
+    jogador.y = 25;
 }
 
 function computarMorte() {
-    vidas--;
-    txtVidas.innerText = vidas;
-    resetJogador();
-    if (vidas <= 0) {
-        alert("GAME OVER! Voltando ao Nível 1.");
-        vidas = 3;
-        levelAtual = 0;
-        txtVidas.innerText = vidas;
-        atualizarInterfaceTexto();
-    }
+    resetJogador(); // Sem perda de vidas, apenas reinicia o posicionamento
 }
 
 function atualizarInterfaceTexto() {
-    txtNivel.innerText = `${levelAtual + 1}/10`;
-    tituloTopo.innerText = `LABIRINTO INSANO: NÍVEL ${levelAtual + 1}/10`;
+    txtNivel.innerText = `${levelAtual + 1}/25`;
+    tituloTopo.innerText = `LABIRINTO CLAUSTRÓFOBICO: NÍVEL ${levelAtual + 1}/25`;
+    txtMoedas.innerText = moedasGlobais;
 }
 
 function verificarPassagem(proximoX, proximoY) {
@@ -183,10 +170,11 @@ function verificarPassagem(proximoX, proximoY) {
 }
 
 function atualizar() {
+    if (jogoPausado) return;
+
     let mx = 0;
     let my = 0;
 
-    // Movimentação Integrada (Teclado WASD/Setas + Joystick Virtual)
     if (teclas["ArrowUp"] || teclas["KeyW"] || toques.up) my = -jogador.velocidade;
     if (teclas["ArrowDown"] || teclas["KeyS"] || toques.down) my = jogador.velocidade;
     if (teclas["ArrowLeft"] || teclas["KeyA"] || toques.left) mx = -jogador.velocidade;
@@ -197,14 +185,25 @@ function atualizar() {
 
     const lvl = niveis[levelAtual];
 
-    // Colisão com Obstáculos e Áreas Perigosas
+    // Interseção e Coleta de Moedas (Persistente)
+    lvl.moedas.forEach(m => {
+        if (!m.coletada) {
+            if (jogador.x < m.x + m.tamanho && jogador.x + jogador.tamanho > m.x &&
+                jogador.y < m.y + m.tamanho && jogador.y + jogador.tamanho > m.y) {
+                m.coletada = true;
+                moedasGlobais++;
+                atualizarInterfaceTexto();
+            }
+        }
+    });
+
+    // Colisão com Obstáculos Ativos
     lvl.perigos.forEach(p => {
         if (jogador.x < p.x + p.w && jogador.x + jogador.tamanho > p.x &&
             jogador.y < p.y + p.h && jogador.y + jogador.tamanho > p.y) {
             computarMorte();
         }
         
-        // Movimento físico dos próprios obstáculos internos rebatedores
         if(p.vx) p.x += p.vx;
         if(p.vy) p.y += p.vy;
 
@@ -212,7 +211,7 @@ function atualizar() {
         if (p.y < 0 || p.y > canvas.height - p.h) p.vy *= -1;
     });
 
-    // Verificação de vitória ao alcançar o ponto de chegada
+    // Ponto de Chegada
     if (jogador.x < objetivo.x + objetivo.tamanho && jogador.x + jogador.tamanho > objetivo.x &&
         jogador.y < objetivo.y + objetivo.tamanho && jogador.y + jogador.tamanho > objetivo.y) {
         
@@ -221,10 +220,8 @@ function atualizar() {
             atualizarInterfaceTexto();
             resetJogador();
         } else {
-            alert("SENSACIONAL! VOCÊ COMPLETOU O DESAFIO MÁXIMO!");
+            alert("INCRÍVEL! VOCÊ SOBREVIVEU AOS 25 NÍVEIS DO LABIRINTO!");
             levelAtual = 0;
-            vidas = 3;
-            txtVidas.innerText = vidas;
             atualizarInterfaceTexto();
             resetJogador();
         }
@@ -234,42 +231,52 @@ function atualizar() {
 function desenhar() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    // Grelha de fundo estilizada
+    // Grelha apertada do fundo
     ctx.strokeStyle = "#cbd5e1";
-    ctx.lineWidth = 1;
-    for (let x = 0; x < canvas.width; x += 30) {
+    ctx.lineWidth = 0.5;
+    for (let x = 0; x < canvas.width; x += 20) {
         ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, canvas.height); ctx.stroke();
     }
-    for (let y = 0; y < canvas.height; y += 30) {
+    for (let y = 0; y < canvas.height; y += 20) {
         ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(canvas.width, y); ctx.stroke();
     }
 
     const lvl = niveis[levelAtual];
 
-    // Desenha Paredes Sólidas Cinzas
-    ctx.fillStyle = "#475569";
+    // Desenha Paredes Sólidas Claustrofóbicas
+    ctx.fillStyle = "#334155";
     lvl.paredes.forEach(p => ctx.fillRect(p.x, p.y, p.w, p.h));
 
-    // Desenha Obstáculos Ativos e Invisíveis
+    // Desenha Moedas Locais Ativas (Apenas se não coletadas antes)
+    lvl.moedas.forEach(m => {
+        if (!m.coletada) {
+            ctx.fillStyle = "#eab308";
+            ctx.beginPath();
+            ctx.arc(m.x + m.tamanho/2, m.y + m.tamanho/2, m.tamanho/2, 0, Math.PI * 2);
+            ctx.fill();
+        }
+    });
+
+    // Desenha Obstáculos
     lvl.perigos.forEach(p => {
-        ctx.fillStyle = p.cor || "#e53e3e";
+        ctx.fillStyle = p.cor;
         ctx.fillRect(p.x, p.y, p.w, p.h);
     });
 
-    // PONTO DE CHEGADA (Design do Cubo Dourado com borda brilhante)
-    ctx.fillStyle = "#eab308";
+    // Desenha Ponto de Chegada
+    ctx.fillStyle = "#10b981";
     ctx.fillRect(objetivo.x, objetivo.y, objetivo.tamanho, objetivo.tamanho);
     ctx.strokeStyle = "#ffffff";
     ctx.lineWidth = 2;
     ctx.strokeRect(objetivo.x + 3, objetivo.y + 3, objetivo.tamanho - 6, objetivo.tamanho - 6);
 
-    // Desenha o Jogador Amarelo com Olhinhos
+    // Desenha o Personagem
     ctx.fillStyle = jogador.cor;
     ctx.fillRect(jogador.x, jogador.y, jogador.tamanho, jogador.tamanho);
     
     ctx.fillStyle = "#000";
-    ctx.fillRect(jogador.x + 3, jogador.y + 4, 3, 5);
-    ctx.fillRect(jogador.x + 13, jogador.y + 4, 3, 5);
+    ctx.fillRect(jogador.x + 2, jogador.y + 3, 2, 4);
+    ctx.fillRect(jogador.x + 9, jogador.y + 3, 2, 4);
 }
 
 function loop() {
