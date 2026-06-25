@@ -3,14 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Labirinto Claustrofóbico Hardcore</title>
+    <title>Labirinto Estelar Claustrofóbico</title>
     <style>
         body {
             margin: 0;
-            background-color: #0b5394;
-            background-image: linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px),
-                              linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px);
-            background-size: 20px 20px;
+            background-color: #020617;
             color: white;
             font-family: 'Courier New', Courier, monospace;
             font-weight: bold;
@@ -21,16 +18,16 @@
             min-height: 100vh;
             overflow-x: hidden;
             touch-action: none;
-            padding-top: 15px;
+            padding-top: 10px;
         }
         
         #painel-status {
             text-align: center;
             text-shadow: 2px 2px #000;
-            font-size: 16px;
-            margin-bottom: 10px;
+            font-size: 15px;
+            margin-bottom: 5px;
         }
-        #painel-status h2 { margin: 0 0 5px 0; color: #fff; font-size: 20px; }
+        #painel-status h2 { margin: 0 0 3px 0; color: #fff; font-size: 18px; }
 
         #area-canvas {
             position: relative;
@@ -40,21 +37,21 @@
         }
 
         canvas {
-            background-color: #e2e8f0;
-            border: 6px double #334155;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            background-color: #030712;
+            border: 6px double #475569;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.8);
             max-width: 95vw;
             max-height: 50vh;
         }
 
-        /* Menu de Pausa (Sobreposição escurecida) */
-        #menu-pausa, #menu-niveis {
+        /* Menus do Jogo */
+        #menu-pausa, #menu-niveis, #menu-skills {
             display: none;
             position: absolute;
             top: 6px; left: 6px;
             width: calc(100% - 12px);
             height: calc(100% - 12px);
-            background-color: rgba(0, 0, 0, 0.75);
+            background-color: rgba(3, 7, 18, 0.95);
             box-sizing: border-box;
             z-index: 10;
             flex-direction: column;
@@ -64,90 +61,89 @@
 
         .btn-menu {
             background-color: #1e293b;
-            border: 2px solid #64748b;
+            border: 2px solid #475569;
             color: white;
             font-family: monospace;
             font-weight: bold;
-            padding: 10px 20px;
-            margin: 8px;
+            padding: 8px 15px;
+            margin: 5px;
             cursor: pointer;
             width: 220px;
             text-align: center;
             box-shadow: 0 4px 0 #0f172a;
+            font-size: 13px;
         }
         .btn-menu:active { transform: translateY(2px); box-shadow: 0 2px 0 #0f172a; }
+        .btn-menu.bloqueado { background-color: #334155; color: #64748b; border-color: #1e293b; cursor: not-allowed; box-shadow: none; }
 
-        /* Grid de Seleção de Níveis */
+        /* Grid de Níveis */
         #grid-niveis {
             display: grid;
             grid-template-columns: repeat(5, 1fr);
-            gap: 10px;
-            max-height: 70%;
+            gap: 8px;
+            max-height: 60%;
             overflow-y: auto;
             padding: 10px;
         }
         .item-nivel {
-            background-color: #334155;
+            background-color: #1e293b;
             border: 2px solid #475569;
             padding: 5px;
             text-align: center;
             cursor: pointer;
-            font-size: 12px;
+            font-size: 11px;
+            width: 65px;
         }
-        .moedas-status {
-            display: flex;
-            justify-content: center;
-            gap: 2px;
-            margin-top: 3px;
+        .item-nivel.travado {
+            background-color: #0f172a;
+            border-color: #334155;
+            color: #475569;
+            cursor: not-allowed;
         }
-        .quadradinho-moeda {
-            width: 8px;
-            height: 8px;
-            background-color: #64748b; /* Cinza inicial */
-        }
-        .quadradinho-moeda.coletado {
-            background-color: #eab308; /* Amarelo se pego */
-        }
+        .moedas-status { display: flex; justify-content: center; gap: 2px; margin-top: 3px; }
+        .quadradinho-moeda { width: 6px; height: 6px; background-color: #475569; }
+        .quadradinho-moeda.coletado { background-color: #eab308; }
         
+        /* Zona de Controles */
         #zona-controles {
             display: flex;
             justify-content: space-between;
             align-items: center;
             width: 100%;
             max-width: 850px;
-            margin-top: 15px;
+            margin-top: 10px;
             padding: 0 20px;
             box-sizing: border-box;
         }
 
-        #dpad { position: relative; width: 140px; height: 140px; }
+        #dpad { position: relative; width: 130px; height: 130px; }
         .btn-dpad {
             position: absolute;
             background-color: #1e293b;
             border: 3px solid #475569;
             border-radius: 8px;
             color: white;
-            font-size: 20px;
+            font-size: 18px;
             display: flex;
             align-items: center;
             justify-content: center;
-            width: 42px;
-            height: 42px;
+            width: 40px;
+            height: 40px;
             user-select: none;
             box-shadow: 0 4px 0px #0f172a;
         }
         .btn-dpad:active { background-color: #475569; transform: translateY(4px); box-shadow: none; }
-        #btn-up { top: 0; left: 49px; }
-        #btn-left { top: 49px; left: 0; }
-        #btn-right { top: 49px; left: 98px; }
-        #btn-down { top: 98px; left: 49px; }
+        #btn-up { top: 0; left: 45px; }
+        #btn-left { top: 45px; left: 0; }
+        #btn-right { top: 45px; left: 90px; }
+        #btn-down { top: 90px; left: 45px; }
 
-        #paineis-acao { position: relative; width: 150px; height: 120px; }
+        #paineis-acao { position: relative; width: 140px; height: 110px; }
         .btn-acao {
             position: absolute;
             border-radius: 50%;
             color: white;
-            font-size: 11px;
+            font-size: 10px;
             font-family: monospace;
             font-weight: bold;
             display: flex;
@@ -160,37 +156,48 @@
         }
         .btn-acao:active { transform: translateY(4px); box-shadow: none; }
         #btn-acao1 { bottom: 5px; left: 5px; background-color: #b91c1c; border: 3px solid #7f1d1d; }
-        #btn-acao2 { top: 5px; right: 5px; background-color: #047857; border: 3px solid #064e3b; }
+        #btn-acao2 { top: 5px; right: 5px; background-color: #0284c7; border: 3px solid #0369a1; }
 
         @media (max-width: 600px) {
             #zona-controles { padding: 0 10px; }
-            #dpad { width: 120px; height: 120px; }
-            .btn-dpad { width: 36px; height: 36px; }
-            #btn-up { left: 42px; } #btn-left { top: 42px; } #btn-right { top: 42px; left: 84px; } #btn-down { top: 84px; left: 42px; }
+            #dpad { width: 110px; height: 110px; }
+            .btn-dpad { width: 34px; height: 34px; }
+            #btn-up { left: 38px; } #btn-left { top: 38px; } #btn-right { top: 38px; left: 76px; } #btn-down { top: 76px; left: 38px; }
         }
     </style>
 </head>
 <body>
 
     <div id="painel-status">
-        <h2 id="titulo-topo">LABIRINTO CLAUSTRÓFOBICO</h2>
-        <div>NÍVEL: <span id="txt-nivel">1/25</span> | MOEDAS TOTAIS: <span id="txt-moedas">0</span></div>
+        <h2 id="titulo-topo">ESPAÇO ENCLAUSURADO</h2>
+        <div>NÍVEL: <span id="txt-nivel">1/25</span> | MOEDAS: <span id="txt-moedas">0</span></div>
     </div>
 
     <div id="area-canvas">
         <canvas id="gameCanvas" width="850" height="460"></canvas>
         
         <div id="menu-pausa">
-            <h3 style="color:#059669; font-size:24px; margin-bottom:15px;">MENU DE PAUSA</h3>
+            <h3 style="color:#0284c7; font-size:22px; margin: 0 0 15px 0;">MENU</h3>
             <div class="btn-menu" id="m-btn-niveis">SELECIONAR NÍVEL</div>
-            <div class="btn-menu" id="m-btn-skills">ÁRVORE DE HABILIDADE</div>
-            <div class="btn-menu" id="m-btn-voltar" style="background-color:#059669;">CONTINUAR JOGO</div>
+            <div class="btn-menu" id="m-btn-skills">ÁRVORE DE HABILIDADES</div>
+            <div class="btn-menu" id="m-btn-voltar" style="background-color:#0284c7;">VOLTAR PRO JOGO</div>
         </div>
 
         <div id="menu-niveis">
-            <h3 style="color:#38bdf8; font-size:20px; margin-bottom:10px;">SELEÇÃO DE NÍVEIS</h3>
+            <h3 style="color:#38bdf8; font-size:18px; margin:0 0 10px 0;">FAZES DESBLOQUEADAS</h3>
             <div id="grid-niveis"></div>
             <div class="btn-menu" id="m-btn-fechar-niveis" style="width:120px; background-color:#b91c1c;">VOLTAR</div>
+        </div>
+
+        <div id="menu-skills">
+            <h3 style="color:#eab308; font-size:18px; margin:0 0 5px 0;">ÁRVORE DE SKILLS</h3>
+            <p style="font-size:11px; margin:0 0 15px 0; color:#abc;">Moedas Disponíveis: <span id="skill-moedas">0</span></p>
+            
+            <div class="btn-menu" id="sk-espada">COMPRAR ESPADA [10 MOEDAS]</div>
+            <div class="btn-menu bloqueado" id="sk-dano">AUMENTAR DANO [5 MOEDAS]</div>
+            <div class="btn-menu bloqueado" id="sk-alcance">AUMENTAR ALCANCE [5 MOEDAS]</div>
+            
+            <div class="btn-menu" id="m-btn-fechar-skills" style="width:120px; background-color:#b91c1c; margin-top:15px;">VOLTAR</div>
         </div>
     </div>
     
@@ -203,8 +210,8 @@
         </div>
 
         <div id="paineis-acao">
-            <div class="btn-acao" id="btn-acao1">AÇÃO 1</div>
-            <div class="btn-acao" id="btn-acao2">AÇÃO 2</div>
+            <div class="btn-acao" id="btn-acao1">ATACAR</div>
+            <div class="btn-acao" id="btn-acao2">MENU</div>
         </div>
     </div>
 
