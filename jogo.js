@@ -1,102 +1,99 @@
 const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
 
-// Elementos da interface
 const txtNivel = document.getElementById("txt-nivel");
 const txtVidas = document.getElementById("txt-vidas");
 const tituloTopo = document.getElementById("titulo-topo");
 const dpad = document.getElementById("dpad");
 const paineisAcao = document.getElementById("paineis-acao");
 
-// Ativa controles visuais apenas em telas de toque (celular)
+// Exibe os controles se detectar suporte a toque
 if ('ontouchstart' in window || navigator.maxTouchPoints > 0) {
     dpad.style.display = "block";
     paineisAcao.style.display = "block";
 }
 
-// Estados Globais do Jogo
 let levelAtual = 0;
 let vidas = 3;
 
-// Jogador (Quadrado Amarelo com rostinho simples estilo a imagem)
 let jogador = {
     x: 45,
     y: 45,
     tamanho: 22,
     cor: "#fadb14",
-    velocidade: 3
+    velocidade: 4.5
 };
 
-// Cubinho de Chegada (Dourado/Amarelo Forte)
-let objetivo = { x: 580, y: 310, tamanho: 25 };
+// Nova posição final do cubo no mapa expandido
+let objetivo = { x: 780, y: 410, tamanho: 25 };
 
-// Configuração dos 10 Níveis (Quantidade de blocos bem reduzida)
+// Níveis redimensionados e adaptados para o campo maior (850x480)
 const niveis = [
     { // Nível 1
-        paredes: [{ x: 250, y: 0, w: 30, h: 260 }],
-        perigos: [{ x: 400, y: 120, w: 35, h: 35, cor: "#e53e3e" }] // Quadrado vermelho
+        paredes: [{ x: 350, y: 0, w: 40, h: 340 }],
+        perigos: [{ x: 550, y: 180, w: 45, h: 45, cor: "#e53e3e" }]
     },
     { // Nível 2
-        paredes: [{ x: 200, y: 100, w: 30, h: 280 }],
+        paredes: [{ x: 280, y: 120, w: 40, h: 360 }],
         perigos: [
-            { x: 380, y: 60, w: 35, h: 35, cor: "#e53e3e" },
-            { x: 480, y: 220, w: 35, h: 35, cor: "#3182ce" } // Quadrado azul
+            { x: 480, y: 80, w: 45, h: 45, cor: "#e53e3e" },
+            { x: 620, y: 280, w: 45, h: 45, cor: "#3182ce" }
         ]
     },
-    { // Nível 3: Labirinto Simples
+    { // Nível 3
         paredes: [
-            { x: 150, y: 0, w: 30, h: 250 },
-            { x: 350, y: 130, w: 30, h: 250 }
+            { x: 200, y: 0, w: 40, h: 320 },
+            { x: 500, y: 160, w: 40, h: 320 }
         ],
-        perigos: [{ x: 230, y: 300, w: 35, h: 35, cor: "#e53e3e" }]
+        perigos: [{ x: 350, y: 380, w: 45, h: 45, cor: "#e53e3e" }]
     },
     { // Nível 4
-        paredes: [{ x: 300, y: 0, w: 30, h: 380 }],
+        paredes: [{ x: 400, y: 0, w: 40, h: 460 }],
         perigos: [
-            { x: 120, y: 180, w: 30, h: 30, cor: "#e53e3e" },
-            { x: 450, y: 80, w: 30, h: 30, cor: "#e53e3e" }
+            { x: 180, y: 220, w: 40, h: 40, color: "#e53e3e" },
+            { x: 600, y: 120, w: 40, h: 40, cor: "#e53e3e" }
         ]
     },
     { // Nível 5
-        paredes: [{ x: 0, y: 180, w: 500, h: 30 }],
-        perigos: [{ x: 520, y: 100, w: 40, h: 40, cor: "#3182ce" }]
+        paredes: [{ x: 0, y: 240, w: 650, h: 40 }],
+        perigos: [{ x: 700, y: 120, w: 50, h: 50, cor: "#3182ce" }]
     },
     { // Nível 6: Labirinto Semi-Invisível
         paredes: [],
         perigos: [
-            { x: 200, y: 0, w: 40, h: 300, cor: "rgba(229, 62, 62, 0.08)" }, // Quase invisível
-            { x: 420, y: 100, w: 40, h: 280, cor: "rgba(49, 130, 206, 0.08)" }
+            { x: 250, y: 0, w: 60, h: 380, cor: "rgba(229, 62, 62, 0.08)" },
+            { x: 550, y: 100, w: 60, h: 380, cor: "rgba(49, 130, 206, 0.08)" }
         ]
     },
     { // Nível 7
-        paredes: [{ x: 300, y: 100, w: 200, h: 30 }],
+        paredes: [{ x: 350, y: 120, w: 300, h: 40 }],
         perigos: [
-            { x: 150, y: 80, w: 30, h: 30, cor: "#e53e3e" },
-            { x: 350, y: 250, w: 30, h: 30, cor: "rgba(229, 62, 62, 0.08)" }
+            { x: 180, y: 100, w: 40, h: 40, cor: "#e53e3e" },
+            { x: 480, y: 320, w: 40, h: 40, cor: "rgba(229, 62, 62, 0.08)" }
         ]
     },
     { // Nível 8
-        paredes: [{ x: 150, y: 0, w: 30, h: 380 }, { x: 450, y: 0, w: 30, h: 380 }],
-        perigos: [{ x: 280, y: 160, w: 80, h: 30, cor: "#e53e3e" }]
+        paredes: [{ x: 200, y: 0, w: 40, h: 480 }, { x: 600, y: 0, w: 40, h: 480 }],
+        perigos: [{ x: 380, y: 220, w: 100, h: 40, cor: "#e53e3e" }]
     },
     { // Nível 9: Caminho Estreito Invisível
         paredes: [],
         perigos: [
-            { x: 100, y: 0, w: 450, h: 40, cor: "rgba(49, 130, 206, 0.06)" },
-            { x: 100, y: 140, w: 450, h: 240, cor: "rgba(49, 130, 206, 0.06)" }
+            { x: 150, y: 0, w: 550, h: 60, cor: "rgba(49, 130, 206, 0.06)" },
+            { x: 150, y: 200, w: 550, h: 280, cor: "rgba(49, 130, 206, 0.06)" }
         ]
     },
-    { // Nível 10: Desafio Final Combinado
-        paredes: [{ x: 310, y: 0, w: 30, h: 380 }],
+    { // Nível 10: Desafio Final
+        paredes: [{ x: 420, y: 0, w: 40, h: 480 }],
         perigos: [
-            { x: 120, y: 80, w: 35, h: 35, cor: "#e53e3e" },
-            { x: 120, y: 260, w: 35, h: 35, cor: "#3182ce" },
-            { x: 480, y: 150, w: 40, h: 40, cor: "rgba(229, 62, 62, 0.1)" }
+            { x: 180, y: 100, w: 45, h: 45, cor: "#e53e3e" },
+            { x: 180, y: 320, w: 45, h: 45, cor: "#3182ce" },
+            { x: 620, y: 200, w: 50, h: 50, cor: "rgba(229, 62, 62, 0.1)" }
         ]
     }
 ];
 
-// Comandos de Movimento
+// Comandos unificados (Teclado e Joystick Virtual)
 let teclas = {};
 window.addEventListener("keydown", e => teclas[e.code] = true);
 window.addEventListener("keyup", e => teclas[e.code] = false);
@@ -113,10 +110,6 @@ function configurarBotao(id, direcao) {
     btn.addEventListener("pointerup", (e) => { e.preventDefault(); toques[direcao] = false; });
     btn.addEventListener("pointerleave", (e) => { e.preventDefault(); toques[direcao] = false; });
 }
-
-// Ouvintes vazios para os botões de ação (prontos para receber funções futuras de puzzle se você quiser)
-document.getElementById("btn-acao1").addEventListener("pointerdown", (e) => e.preventDefault());
-document.getElementById("btn-acao2").addEventListener("pointerdown", (e) => e.preventDefault());
 
 function resetJogador() {
     jogador.x = 45;
@@ -142,13 +135,11 @@ function atualizarInterfaceTexto() {
 }
 
 function verificarPassagem(proximoX, proximoY) {
-    // Limites de tela do canvas
     if (proximoX < 0 || proximoY < 0 || 
         proximoX > canvas.width - jogador.tamanho || 
         proximoY > canvas.height - jogador.tamanho) {
         return false;
     }
-    // Bloqueio por paredes sólidas
     const lvl = niveis[levelAtual];
     for (let p of lvl.paredes) {
         if (proximoX < p.x + p.w && proximoX + jogador.tamanho > p.x &&
@@ -163,6 +154,7 @@ function atualizar() {
     let mx = 0;
     let my = 0;
 
+    // Captura comandos do teclado (Setas ou WASD) ou do Joystick Virtual
     if (teclas["ArrowUp"] || teclas["KeyW"] || toques.up) my = -jogador.velocidade;
     if (teclas["ArrowDown"] || teclas["KeyS"] || toques.down) my = jogador.velocidade;
     if (teclas["ArrowLeft"] || teclas["KeyA"] || toques.left) mx = -jogador.velocidade;
@@ -173,7 +165,7 @@ function atualizar() {
 
     const lvl = niveis[levelAtual];
 
-    // Colisão com os blocos perigosos (vermelhos, azuis ou invisíveis)
+    // Colisão com os perigos
     lvl.perigos.forEach(p => {
         if (jogador.x < p.x + p.w && jogador.x + jogador.tamanho > p.x &&
             jogador.y < p.y + p.h && jogador.y + jogador.tamanho > p.y) {
@@ -181,7 +173,7 @@ function atualizar() {
         }
     });
 
-    // Colisão com o cubinho dourado de chegada
+    // Colisão com a chegada
     if (jogador.x < objetivo.x + objetivo.tamanho && jogador.x + jogador.tamanho > objetivo.x &&
         jogador.y < objetivo.y + objetivo.tamanho && jogador.y + jogador.tamanho > objetivo.y) {
         
@@ -203,7 +195,7 @@ function atualizar() {
 function desenhar() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    // Grelha interna cinza bem sutil (estilo o piso da imagem)
+    // Grelha de fundo
     ctx.strokeStyle = "#cbd5e1";
     ctx.lineWidth = 1;
     for (let x = 0; x < canvas.width; x += 30) {
@@ -215,25 +207,25 @@ function desenhar() {
 
     const lvl = niveis[levelAtual];
 
-    // Desenha Paredes Sólidas (Cinza Escuro de barreira)
+    // Desenha as Paredes Sólidas
     ctx.fillStyle = "#475569";
     lvl.paredes.forEach(p => ctx.fillRect(p.x, p.y, p.w, p.h));
 
-    // Desenha Obstáculos Coloridos ou Semi-Invisíveis
+    // Desenha Obstáculos
     lvl.perigos.forEach(p => {
-        ctx.fillStyle = p.cor;
+        ctx.fillStyle = p.cor || "#e53e3e";
         ctx.fillRect(p.x, p.y, p.w, p.h);
     });
 
-    // Desenha o Cubo de Chegada (Dourado)
+    // Desenha o Cubo de Chegada
     ctx.fillStyle = "#eab308";
     ctx.fillRect(objetivo.x, objetivo.y, objetivo.tamanho, objetivo.tamanho);
 
-    // Desenha o Jogador (Amarelo com Olhinhos)
+    // Desenha o Jogador
     ctx.fillStyle = jogador.cor;
     ctx.fillRect(jogador.x, jogador.y, jogador.tamanho, jogador.tamanho);
     
-    // Detalhe dos olhinhos para parecer com o da imagem
+    // Olhinhos
     ctx.fillStyle = "#000";
     ctx.fillRect(jogador.x + 4, jogador.y + 5, 3, 5);
     ctx.fillRect(jogador.x + 14, jogador.y + 5, 3, 5);
