@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Labirinto de Puzzle 2D - Campo Expandido</title>
+    <title>Super Labirinto Hardcore - Agrinho</title>
     <style>
         body {
             margin: 0;
@@ -17,82 +17,90 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: center;
-            height: 100vh;
-            overflow: hidden;
+            justify-content: flex-start;
+            min-height: 100vh;
+            overflow-x: hidden;
             touch-action: none;
+            padding-top: 20px;
         }
         
-        #container-jogo {
-            position: relative;
+        /* Painel de Status no topo */
+        #painel-status {
+            text-align: center;
+            text-shadow: 2px 2px #000;
+            font-size: 18px;
+            margin-bottom: 15px;
+        }
+        #painel-status h2 { margin: 0 0 5px 0; color: #fff; font-size: 22px; }
+
+        #area-canvas {
             display: flex;
-            align-items: center;
             justify-content: center;
             width: 100%;
-            max-width: 1100px;
         }
 
         canvas {
-            background-color: #e2e8f0; /* Fundo cinza claro da área de jogo */
+            background-color: #e2e8f0;
             border: 6px double #334155;
             box-shadow: 0 10px 30px rgba(0,0,0,0.5);
             max-width: 95vw;
-            max-height: 70vh;
+            max-height: 50vh;
+        }
+        
+        /* Área dos Controles - Totalmente fora e abaixo do campo de jogo */
+        #zona-controles {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+            max-width: 850px;
+            margin-top: 25px;
+            padding: 0 20px;
+            box-sizing: border-box;
         }
 
-        /* Textos de status no topo esquerdo */
-        #painel-status {
-            position: absolute;
-            left: 20px;
-            top: -75px;
-            text-shadow: 2px 2px #000;
-            font-size: 18px;
-        }
-        #painel-status h2 { margin: 0 0 5px 0; color: #fff; }
-        #painel-status div { margin-bottom: 5px; }
-
-        /* D-PAD Digital à Esquerda */
+        /* Joystick de Movimentação (D-PAD) */
         #dpad {
-            display: none;
-            position: absolute;
-            left: -120px;
-            bottom: 20px;
-            width: 130px;
-            height: 130px;
+            position: relative;
+            width: 150px;
+            height: 150px;
         }
         .btn-dpad {
             position: absolute;
-            background-color: #475569;
-            border: 3px solid #1e293b;
-            border-radius: 6px;
+            background-color: #1e293b;
+            border: 3px solid #475569;
+            border-radius: 8px;
             color: white;
-            font-size: 20px;
+            font-size: 22px;
             display: flex;
             align-items: center;
             justify-content: center;
-            width: 40px;
-            height: 40px;
+            width: 45px;
+            height: 45px;
             user-select: none;
+            box-shadow: 0 4px 0px #0f172a;
         }
-        #btn-up { top: 0; left: 45px; }
-        #btn-left { top: 45px; left: 0; }
-        #btn-right { top: 45px; left: 90px; }
-        #btn-down { top: 90px; left: 45px; }
+        .btn-dpad:active {
+            background-color: #475569;
+            transform: translateY(4px);
+            box-shadow: none;
+        }
+        #btn-up { top: 0; left: 52px; }
+        #btn-left { top: 52px; left: 0; }
+        #btn-right { top: 52px; left: 104px; }
+        #btn-down { top: 104px; left: 52px; }
 
-        /* Botões de Ação à Direita */
+        /* Painel de Botões de Ação */
         #paineis-acao {
-            display: none;
-            position: absolute;
-            right: -120px;
-            bottom: 20px;
-            width: 150px;
-            height: 120px;
+            position: relative;
+            width: 160px;
+            height: 130px;
         }
         .btn-acao {
             position: absolute;
-            background-color: #475569;
-            border: 3px solid #1e293b;
-            border-radius: 8px;
+            background-color: #b91c1c; /* Vermelho para destacar ação */
+            border: 3px solid #7f1d1d;
+            border-radius: 50%; /* Redondos estilo controle clássico */
             color: white;
             font-size: 12px;
             font-family: monospace;
@@ -100,35 +108,50 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            width: 75px;
-            height: 40px;
+            width: 55px;
+            height: 55px;
             user-select: none;
-            box-shadow: 2px 2px 0px #1e293b;
+            box-shadow: 0 4px 0px #450a0a;
         }
-        #btn-acao1 { bottom: 0; left: 0; }
-        #btn-acao2 { bottom: 45px; left: 35px; }
+        .btn-acao:active {
+            background-color: #ef4444;
+            transform: translateY(4px);
+            box-shadow: none;
+        }
+        #btn-acao1 { bottom: 10px; left: 10px; background-color: #b91c1c; border-color: #7f1d1d;}
+        #btn-acao2 { top: 10px; right: 10px; background-color: #047857; border-color: #064e3b; box-shadow: 0 4px 0px #022c22;} /* Verde */
+        #btn-acao2:active { background-color: #10b981; }
 
-        .btn-dpad:active, .btn-acao:active { background-color: #64748b; }
-
-        /* Ajustes responsivos para telas menores (celular) */
-        @media (max-width: 900px) {
-            #dpad { left: 20px; bottom: 20px; }
-            #paineis-acao { right: 20px; bottom: 20px; }
-            #painel-status { left: 5px; font-size: 14px; }
+        /* Responsividade */
+        @media (max-width: 600px) {
+            #zona-controles {
+                max-width: 100%;
+                padding: 0 10px;
+            }
+            #dpad { width: 130px; height: 130px; }
+            .btn-dpad { width: 40px; height: 40px; font-size: 18px; }
+            #btn-up { left: 45px; }
+            #btn-left { top: 45px; }
+            #btn-right { top: 45px; left: 90px; }
+            #btn-down { top: 90px; left: 45px; }
+            
+            .btn-acao { width: 50px; height: 50px; }
+            #paineis-acao { width: 130px; }
         }
     </style>
 </head>
 <body>
 
-    <div id="container-jogo">
-        <div id="painel-status">
-            <h2 id="titulo-topo">LABIRINHO PUZZLE: NÍVEL 1/10</h2>
-            <div>NÍVEL: <span id="txt-nivel">1/10</span></div>
-            <div>VIDAS: <span id="txt-vidas">3</span></div>
-        </div>
+    <div id="painel-status">
+        <h2 id="titulo-topo">LABIRINTO INSANO: NÍVEL 1/10</h2>
+        <div>NÍVEL: <span id="txt-nivel">1/10</span> | VIDAS: <span id="txt-vidas">3</span></div>
+    </div>
 
-        <canvas id="gameCanvas" width="850" height="480"></canvas>
-        
+    <div id="area-canvas">
+        <canvas id="gameCanvas" width="850" height="460"></canvas>
+    </div>
+    
+    <div id="zona-controles">
         <div id="dpad">
             <div class="btn-dpad" id="btn-up">▲</div>
             <div class="btn-dpad" id="btn-left">◀</div>
@@ -137,8 +160,8 @@
         </div>
 
         <div id="paineis-acao">
+            <div class="btn-acao" id="btn-acao1">AÇÃO 1</div>
             <div class="btn-acao" id="btn-acao2">AÇÃO 2</div>
-            <div class="btn-acao" id="btn-acao1">AÇÃO</div>
         </div>
     </div>
 
