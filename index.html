@@ -3,13 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Super Puzzle Agrinho</title>
+    <title>Labirinto de Puzzle 2D</title>
     <style>
         body {
             margin: 0;
-            background-color: #111;
+            background-color: #0b5394; /* Fundo azul estilo blueprint */
+            background-image: linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px),
+                              linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px);
+            background-size: 20px 20px;
             color: white;
-            font-family: Arial, sans-serif;
+            font-family: 'Courier New', Courier, monospace;
+            font-weight: bold;
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -18,67 +22,114 @@
             overflow: hidden;
             touch-action: none;
         }
-        .info { text-align: center; margin-bottom: 5px; }
-        h2 { margin: 2px; color: #4CAF50; font-size: 20px; }
-        p { margin: 2px; font-size: 12px; color: #aaa; }
         
         #container-jogo {
             position: relative;
             display: flex;
-            flex-direction: column;
             align-items: center;
+            justify-content: center;
+            width: 100%;
+            max-width: 950px;
         }
+
         canvas {
-            background-color: #222;
-            border: 4px solid #2e7d32;
-            max-width: 95vw;
-            max-height: 55vh;
+            background-color: #e2e8f0; /* Fundo cinza claro da área de jogo */
+            border: 6px double #334155;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
         }
-        
-        /* Controles estilo Minecraft de Celular (D-Pad) */
+
+        /* Textos de status no topo esquerdo idênticos à imagem */
+        #painel-status {
+            position: absolute;
+            left: 20px;
+            top: -75px;
+            text-shadow: 2px 2px #000;
+            font-size: 18px;
+        }
+        #painel-status h2 { margin: 0 0 5px 0; color: #fff; }
+        #painel-status div { margin-bottom: 5px; }
+
+        /* D-PAD Digital à Esquerda */
         #dpad {
-            display: none; /* Escondido no PC, aparece via JS no celular */
-            position: relative;
-            width: 160px;
-            height: 160px;
-            margin-top: 15px;
+            display: none;
+            position: absolute;
+            left: 20px;
+            bottom: 20px;
+            width: 130px;
+            height: 130px;
         }
         .btn-dpad {
             position: absolute;
-            background-color: rgba(255, 255, 255, 0.2);
-            border: 2px solid rgba(255, 255, 255, 0.4);
+            background-color: #475569;
+            border: 3px solid #1e293b;
+            border-radius: 6px;
+            color: white;
+            font-size: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 40px;
+            height: 40px;
+            user-select: none;
+        }
+        #btn-up { top: 0; left: 45px; }
+        #btn-left { top: 45px; left: 0; }
+        #btn-right { top: 45px; left: 90px; }
+        #btn-down { top: 90px; left: 45px; }
+
+        /* Botões de Ação à Direita */
+        #paineis-acao {
+            display: none;
+            position: absolute;
+            right: 20px;
+            bottom: 20px;
+            width: 150px;
+            height: 120px;
+        }
+        .btn-acao {
+            position: absolute;
+            background-color: #475569;
+            border: 3px solid #1e293b;
             border-radius: 8px;
             color: white;
-            font-size: 24px;
+            font-size: 12px;
+            font-family: monospace;
             font-weight: bold;
             display: flex;
             align-items: center;
             justify-content: center;
-            width: 50px;
-            height: 50px;
+            width: 75px;
+            height: 40px;
             user-select: none;
+            box-shadow: 2px 2px 0px #1e293b;
         }
-        .btn-dpad:active { background-color: rgba(255, 255, 255, 0.5); }
-        #btn-up { top: 0; left: 55px; }
-        #btn-left { top: 55px; left: 0; }
-        #btn-right { top: 55px; left: 110px; }
-        #btn-down { top: 110px; left: 55px; }
+        #btn-acao1 { bottom: 0; left: 0; }
+        #btn-acao2 { bottom: 45px; left: 35px; } /* Em cima e um pouco para a direita */
+
+        .btn-dpad:active, .btn-acao:active { background-color: #64748b; }
     </style>
 </head>
 <body>
-    <div class="info">
-        <h2 id="level-display">Nível: 1/10</h2>
-        <p>Evite os blocos vermelhos/azuis e as armadilhas invisíveis!</p>
-    </div>
-    
+
     <div id="container-jogo">
-        <canvas id="gameCanvas" width="800" height="500"></canvas>
+        <div id="painel-status">
+            <h2 id="titulo-topo">LABIRINHO PUZZLE: NÍVEL 1/10</h2>
+            <div>NÍVEL: <span id="txt-nivel">1/10</span></div>
+            <div>VIDAS: <span id="txt-vidas">3</span></div>
+        </div>
+
+        <canvas id="gameCanvas" width="650" height="380"></canvas>
         
         <div id="dpad">
             <div class="btn-dpad" id="btn-up">▲</div>
             <div class="btn-dpad" id="btn-left">◀</div>
             <div class="btn-dpad" id="btn-right">▶</div>
             <div class="btn-dpad" id="btn-down">▼</div>
+        </div>
+
+        <div id="paineis-acao">
+            <div class="btn-acao" id="btn-acao2">AÇÃO 2</div>
+            <div class="btn-acao" id="btn-acao1">AÇÃO</div>
         </div>
     </div>
 
