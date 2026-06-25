@@ -1,115 +1,107 @@
 const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
-const levelDisplay = document.getElementById("level-display");
-const dpad = document.getElementById("dpad");
 
-// Detecta se é celular para mostrar as setinhas
+// Elementos da interface
+const txtNivel = document.getElementById("txt-nivel");
+const txtVidas = document.getElementById("txt-vidas");
+const tituloTopo = document.getElementById("titulo-topo");
+const dpad = document.getElementById("dpad");
+const paineisAcao = document.getElementById("paineis-acao");
+
+// Ativa controles visuais apenas em telas de toque (celular)
 if ('ontouchstart' in window || navigator.maxTouchPoints > 0) {
     dpad.style.display = "block";
+    paineisAcao.style.display = "block";
 }
 
+// Estados Globais do Jogo
 let levelAtual = 0;
+let vidas = 3;
 
-// Configurações do Jogador (Quadrado Amarelo estilo a imagem)
+// Jogador (Quadrado Amarelo com rostinho simples estilo a imagem)
 let jogador = {
-    x: 40,
-    y: 240,
-    tamanho: 20,
-    cor: "#FFEB3B",
-    velocidade: 3.5
+    x: 45,
+    y: 45,
+    tamanho: 22,
+    cor: "#fadb14",
+    velocidade: 3
 };
 
-// Cubinho de Chegada (Dourado)
-let objetivo = { x: 740, y: 235, tamanho: 30 };
+// Cubinho de Chegada (Dourado/Amarelo Forte)
+let objetivo = { x: 580, y: 310, tamanho: 25 };
 
-// Estrutura dos 10 Níveis
-// paredes = sólidas (não passa) | armadilhas = semi-invisíveis (morre se tocar) | inimigos = se movem
+// Configuração dos 10 Níveis (Quantidade de blocos bem reduzida)
 const niveis = [
-    { // Nível 1: Introdução às paredes e cubinho
-        paredes: [{ x: 300, y: 0, w: 40, h: 350 }],
-        armadilhas: [],
-        inimigos: []
+    { // Nível 1
+        paredes: [{ x: 250, y: 0, w: 30, h: 260 }],
+        perigos: [{ x: 400, y: 120, w: 35, h: 35, cor: "#e53e3e" }] // Quadrado vermelho
     },
-    { // Nível 2: Primeiros Inimigos em Movimento
-        paredes: [],
-        armadilhas: [],
-        inimigos: [{ x: 400, y: 100, w: 30, h: 30, vx: 0, vy: 5, cor: "red" }]
-    },
-    { // Nível 3: O Labirinto Físico Básica
-        paredes: [
-            { x: 200, y: 0, w: 40, h: 380 },
-            { x: 450, y: 120, w: 40, h: 380 }
-        ],
-        armadilhas: [],
-        inimigos: []
-    },
-    { // Nível 4: Labirinto com Inimigo Vermelho
-        paredes: [{ x: 350, y: 0, w: 40, h: 400 }],
-        armadilhas: [],
-        inimigos: [{ x: 500, y: 50, w: 35, h: 35, vx: 0, vy: 6, cor: "red" }]
-    },
-    { // Nível 5: Paredes e Blocos Azuis Assassinos
-        paredes: [{ x: 200, y: 150, w: 400, h: 40 }],
-        armadilhas: [],
-        inimigos: [
-            { x: 250, y: 50, w: 30, h: 30, vx: 4, vy: 0, cor: "blue" },
-            { x: 500, y: 350, w: 30, h: 30, vx: -4, vy: 0, cor: "blue" }
+    { // Nível 2
+        paredes: [{ x: 200, y: 100, w: 30, h: 280 }],
+        perigos: [
+            { x: 380, y: 60, w: 35, h: 35, cor: "#e53e3e" },
+            { x: 480, y: 220, w: 35, h: 35, cor: "#3182ce" } // Quadrado azul
         ]
     },
-    { // Nível 6: Labirinto Semi-Invisível (Cuidado!)
-        paredes: [],
-        armadilhas: [
-            { x: 250, y: 0, w: 50, h: 380 },
-            { x: 500, y: 120, w: 50, h: 380 }
-        ],
-        inimigos: []
-    },
-    { // Nível 7: Labirinto Invisível Cruzado com Inimigos
-        paredes: [{ x: 400, y: 0, w: 40, h: 500 }],
-        armadilhas: [{ x: 150, y: 100, w: 150, h: 40 }],
-        inimigos: [{ x: 600, y: 200, w: 25, h: 25, vx: 0, vy: 7, cor: "red" }]
-    },
-    { // Nível 8: Corredor Estreito e Rápido
+    { // Nível 3: Labirinto Simples
         paredes: [
-            { x: 0, y: 180, w: 700, h: 20 },
-            { x: 100, y: 300, w: 700, h: 20 }
+            { x: 150, y: 0, w: 30, h: 250 },
+            { x: 350, y: 130, w: 30, h: 250 }
         ],
-        armadilhas: [],
-        inimigos: [{ x: 300, y: 220, w: 30, h: 60, vx: 5, vy: 0, cor: "red" }]
+        perigos: [{ x: 230, y: 300, w: 35, h: 35, cor: "#e53e3e" }]
     },
-    { // Nível 9: Grades de Armadilhas Quase Invisíveis
+    { // Nível 4
+        paredes: [{ x: 300, y: 0, w: 30, h: 380 }],
+        perigos: [
+            { x: 120, y: 180, w: 30, h: 30, cor: "#e53e3e" },
+            { x: 450, y: 80, w: 30, h: 30, cor: "#e53e3e" }
+        ]
+    },
+    { // Nível 5
+        paredes: [{ x: 0, y: 180, w: 500, h: 30 }],
+        perigos: [{ x: 520, y: 100, w: 40, h: 40, cor: "#3182ce" }]
+    },
+    { // Nível 6: Labirinto Semi-Invisível
         paredes: [],
-        armadilhas: [
-            { x: 200, y: 40, w: 40, h: 400 },
-            { x: 400, y: 40, w: 40, h: 400 },
-            { x: 600, y: 40, w: 40, h: 400 }
-        ],
-        inimigos: [{ x: 400, y: 200, w: 30, h: 30, vx: 8, vy: 0, cor: "blue" }]
+        perigos: [
+            { x: 200, y: 0, w: 40, h: 300, cor: "rgba(229, 62, 62, 0.08)" }, // Quase invisível
+            { x: 420, y: 100, w: 40, h: 280, cor: "rgba(49, 130, 206, 0.08)" }
+        ]
     },
-    { // Nível 10: O Caos Completo do Scratch
-        paredes: [
-            { x: 150, y: 0, w: 30, h: 400 },
-            { x: 600, y: 100, w: 30, h: 400 }
-        ],
-        armadilhas: [
-            { x: 300, y: 200, w: 150, h: 30 },
-            { x: 450, y: 350, w: 30, h: 100 }
-        ],
-        inimigos: [
-            { x: 350, y: 50, w: 30, h: 30, vx: 6, vy: 6, cor: "red" },
-            { x: 500, y: 400, w: 25, h: 25, vx: -6, vy: -4, cor: "blue" }
+    { // Nível 7
+        paredes: [{ x: 300, y: 100, w: 200, h: 30 }],
+        perigos: [
+            { x: 150, y: 80, w: 30, h: 30, cor: "#e53e3e" },
+            { x: 350, y: 250, w: 30, h: 30, cor: "rgba(229, 62, 62, 0.08)" }
+        ]
+    },
+    { // Nível 8
+        paredes: [{ x: 150, y: 0, w: 30, h: 380 }, { x: 450, y: 0, w: 30, h: 380 }],
+        perigos: [{ x: 280, y: 160, w: 80, h: 30, cor: "#e53e3e" }]
+    },
+    { // Nível 9: Caminho Estreito Invisível
+        paredes: [],
+        perigos: [
+            { x: 100, y: 0, w: 450, h: 40, cor: "rgba(49, 130, 206, 0.06)" },
+            { x: 100, y: 140, w: 450, h: 240, cor: "rgba(49, 130, 206, 0.06)" }
+        ]
+    },
+    { // Nível 10: Desafio Final Combinado
+        paredes: [{ x: 310, y: 0, w: 30, h: 380 }],
+        perigos: [
+            { x: 120, y: 80, w: 35, h: 35, cor: "#e53e3e" },
+            { x: 120, y: 260, w: 35, h: 35, cor: "#3182ce" },
+            { x: 480, y: 150, w: 40, h: 40, cor: "rgba(229, 62, 62, 0.1)" }
         ]
     }
 ];
 
-// Controles do Teclado (PC)
+// Comandos de Movimento
 let teclas = {};
 window.addEventListener("keydown", e => teclas[e.code] = true);
 window.addEventListener("keyup", e => teclas[e.code] = false);
 
-// Controles de Toque (Celular)
 let toques = { up: false, down: false, left: false, right: false };
-
 configurarBotao("btn-up", "up");
 configurarBotao("btn-down", "down");
 configurarBotao("btn-left", "left");
@@ -122,93 +114,87 @@ function configurarBotao(id, direcao) {
     btn.addEventListener("pointerleave", (e) => { e.preventDefault(); toques[direcao] = false; });
 }
 
+// Ouvintes vazios para os botões de ação (prontos para receber funções futuras de puzzle se você quiser)
+document.getElementById("btn-acao1").addEventListener("pointerdown", (e) => e.preventDefault());
+document.getElementById("btn-acao2").addEventListener("pointerdown", (e) => e.preventDefault());
+
 function resetJogador() {
-    jogador.x = 40;
-    jogador.y = 240;
+    jogador.x = 45;
+    jogador.y = 45;
 }
 
-function checarColisaoAoMover(proximoX, proximoY) {
-    // Limites da tela
+function computarMorte() {
+    vidas--;
+    txtVidas.innerText = vidas;
+    resetJogador();
+    if (vidas <= 0) {
+        alert("FIM DE JOGO! Reiniciando do Nível 1.");
+        vidas = 3;
+        levelAtual = 0;
+        txtVidas.innerText = vidas;
+        atualizarInterfaceTexto();
+    }
+}
+
+function atualizarInterfaceTexto() {
+    txtNivel.innerText = `${levelAtual + 1}/10`;
+    tituloTopo.innerText = `LABIRINHO PUZZLE: NÍVEL ${levelAtual + 1}/10`;
+}
+
+function verificarPassagem(proximoX, proximoY) {
+    // Limites de tela do canvas
     if (proximoX < 0 || proximoY < 0 || 
         proximoX > canvas.width - jogador.tamanho || 
         proximoY > canvas.height - jogador.tamanho) {
         return false;
     }
-
-    // Colisão com paredes sólidas do nível atual (bloqueia movimento)
+    // Bloqueio por paredes sólidas
     const lvl = niveis[levelAtual];
     for (let p of lvl.paredes) {
         if (proximoX < p.x + p.w && proximoX + jogador.tamanho > p.x &&
             proximoY < p.y + p.h && proximoY + jogador.tamanho > p.y) {
-            return false; // Não pode mover para cá
+            return false;
         }
     }
-    return true; // Movimento livre
+    return true;
 }
 
 function atualizar() {
-    let moverX = 0;
-    let moverY = 0;
+    let mx = 0;
+    let my = 0;
 
-    // Processa comandos do PC ou Celular
-    if (teclas["ArrowUp"] || teclas["KeyW"] || toques.up) moverY = -jogador.velocidade;
-    if (teclas["ArrowDown"] || teclas["KeyS"] || toques.down) moverY = jogador.velocidade;
-    if (teclas["ArrowLeft"] || teclas["KeyA"] || toques.left) moverX = -jogador.velocidade;
-    if (teclas["ArrowRight"] || teclas["KeyD"] || toques.right) moverX = jogador.velocidade;
+    if (teclas["ArrowUp"] || teclas["KeyW"] || toques.up) my = -jogador.velocidade;
+    if (teclas["ArrowDown"] || teclas["KeyS"] || toques.down) my = jogador.velocidade;
+    if (teclas["ArrowLeft"] || teclas["KeyA"] || toques.left) mx = -jogador.velocidade;
+    if (teclas["ArrowRight"] || teclas["KeyD"] || toques.right) mx = jogador.velocidade;
 
-    // Tenta mover no eixo X
-    if (moverX !== 0 && checarColisaoAoMover(jogador.x + moverX, jogador.y)) {
-        jogador.x += moverX;
-    }
-    // Tenta mover no eixo Y
-    if (moverY !== 0 && checarColisaoAoMover(jogador.x, jogador.y + moverY)) {
-        jogador.y += moverY;
-    }
+    if (mx !== 0 && verificarPassagem(jogador.x + mx, jogador.y)) jogador.x += mx;
+    if (my !== 0 && verificarPassagem(jogador.x, jogador.y + my)) jogador.y += my;
 
     const lvl = niveis[levelAtual];
 
-    // Colisão com Armadilhas Semi-Invisíveis (Morte imediata)
-    lvl.armadilhas.forEach(armadilha => {
-        if (jogador.x < armadilha.x + armadilha.w &&
-            jogador.x + jogador.tamanho > armadilha.x &&
-            jogador.y < armadilha.y + armadilha.h &&
-            jogador.y + jogador.tamanho > armadilha.y) {
-            resetJogador();
+    // Colisão com os blocos perigosos (vermelhos, azuis ou invisíveis)
+    lvl.perigos.forEach(p => {
+        if (jogador.x < p.x + p.w && jogador.x + jogador.tamanho > p.x &&
+            jogador.y < p.y + p.h && jogador.y + jogador.tamanho > p.y) {
+            computarMorte();
         }
     });
 
-    // Atualiza e checa os inimigos que se movem
-    lvl.inimigos.forEach(inimigo => {
-        inimigo.x += inimigo.vx;
-        inimigo.y += inimigo.vy;
-
-        // Rebater nas paredes ou bordas
-        if (inimigo.x < 0 || inimigo.x > canvas.width - inimigo.w) inimigo.vx *= -1;
-        if (inimigo.y < 0 || inimigo.y > canvas.height - inimigo.h) inimigo.vy *= -1;
-
-        // Colisão com Inimigo (Morte)
-        if (jogador.x < inimigo.x + inimigo.w &&
-            jogador.x + jogador.tamanho > inimigo.x &&
-            jogador.y < inimigo.y + inimigo.h &&
-            jogador.y + jogador.tamanho > inimigo.y) {
-            resetJogador();
-        }
-    });
-
-    // Colisão com o Cubinho Dourado de Chegada
-    if (jogador.x < objetivo.x + objetivo.tamanho &&
-        jogador.x + jogador.tamanho > objetivo.x &&
-        jogador.y < objetivo.y + objetivo.tamanho &&
-        jogador.y + jogador.tamanho > objetivo.y) {
+    // Colisão com o cubinho dourado de chegada
+    if (jogador.x < objetivo.x + objetivo.tamanho && jogador.x + jogador.tamanho > objetivo.x &&
+        jogador.y < objetivo.y + objetivo.tamanho && jogador.y + jogador.tamanho > objetivo.y) {
         
         if (levelAtual < niveis.length - 1) {
             levelAtual++;
-            levelDisplay.innerText = `Nível: ${levelAtual + 1}/10`;
+            atualizarInterfaceTexto();
             resetJogador();
         } else {
-            alert("PARABÉNS! VOCÊ COMPLETOU TODOS OS PUZZLES!");
+            alert("PARABÉNS! VOCÊ ZEROU O LABIRINTO!");
             levelAtual = 0;
-            levelDisplay.innerText = `Nível: 1/10`;
+            vidas = 3;
+            txtVidas.innerText = vidas;
+            atualizarInterfaceTexto();
             resetJogador();
         }
     }
@@ -217,41 +203,40 @@ function atualizar() {
 function desenhar() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    // Fundo quadriculado cinza escuro
-    ctx.fillStyle = "#2c2c2c";
-    for(let i=0; i<canvas.width; i+=40) {
-        for(let j=0; j<canvas.height; j+=40) {
-            if((i+j)%80==0) ctx.fillRect(i,j,40,40);
-        }
+    // Grelha interna cinza bem sutil (estilo o piso da imagem)
+    ctx.strokeStyle = "#cbd5e1";
+    ctx.lineWidth = 1;
+    for (let x = 0; x < canvas.width; x += 30) {
+        ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, canvas.height); ctx.stroke();
+    }
+    for (let y = 0; y < canvas.height; y += 30) {
+        ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(canvas.width, y); ctx.stroke();
     }
 
     const lvl = niveis[levelAtual];
 
-    // Desenhar Paredes Sólidas (Cinza Claro)
-    ctx.fillStyle = "#777";
+    // Desenha Paredes Sólidas (Cinza Escuro de barreira)
+    ctx.fillStyle = "#475569";
     lvl.paredes.forEach(p => ctx.fillRect(p.x, p.y, p.w, p.h));
 
-    // Desenhar Armadilhas Semi-Invisíveis (Quase a cor do fundo, bem discretas)
-    ctx.fillStyle = "rgba(255, 0, 0, 0.07)"; // Apenas 7% de opacidade
-    lvl.armadilhas.forEach(a => {
-        ctx.fillRect(a.x, a.y, a.w, a.h);
-        ctx.strokeStyle = "rgba(255, 255, 255, 0.05)";
-        ctx.strokeRect(a.x, a.y, a.w, a.h);
+    // Desenha Obstáculos Coloridos ou Semi-Invisíveis
+    lvl.perigos.forEach(p => {
+        ctx.fillStyle = p.cor;
+        ctx.fillRect(p.x, p.y, p.w, p.h);
     });
 
-    // Desenhar Inimigos Móveis (Vermelho ou Azul)
-    lvl.inimigos.forEach(inimigo => {
-        ctx.fillStyle = inimigo.cor;
-        ctx.fillRect(inimigo.x, inimigo.y, inimigo.w, inimigo.h);
-    });
-
-    // Desenhar Cubinho Dourado de Chegada
-    ctx.fillStyle = "#FFD700";
+    // Desenha o Cubo de Chegada (Dourado)
+    ctx.fillStyle = "#eab308";
     ctx.fillRect(objetivo.x, objetivo.y, objetivo.tamanho, objetivo.tamanho);
 
-    // Desenhar Jogador (Quadrado Amarelo)
+    // Desenha o Jogador (Amarelo com Olhinhos)
     ctx.fillStyle = jogador.cor;
     ctx.fillRect(jogador.x, jogador.y, jogador.tamanho, jogador.tamanho);
+    
+    // Detalhe dos olhinhos para parecer com o da imagem
+    ctx.fillStyle = "#000";
+    ctx.fillRect(jogador.x + 4, jogador.y + 5, 3, 5);
+    ctx.fillRect(jogador.x + 14, jogador.y + 5, 3, 5);
 }
 
 function loop() {
