@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Labirinto de Puzzle 2D</title>
+    <title>Labirinto de Puzzle 2D - Campo Expandido</title>
     <style>
         body {
             margin: 0;
@@ -29,16 +29,18 @@
             align-items: center;
             justify-content: center;
             width: 100%;
-            max-width: 950px;
+            max-width: 1100px;
         }
 
         canvas {
             background-color: #e2e8f0; /* Fundo cinza claro da área de jogo */
             border: 6px double #334155;
             box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            max-width: 95vw;
+            max-height: 70vh;
         }
 
-        /* Textos de status no topo esquerdo idênticos à imagem */
+        /* Textos de status no topo esquerdo */
         #painel-status {
             position: absolute;
             left: 20px;
@@ -53,7 +55,7 @@
         #dpad {
             display: none;
             position: absolute;
-            left: 20px;
+            left: -120px;
             bottom: 20px;
             width: 130px;
             height: 130px;
@@ -81,7 +83,7 @@
         #paineis-acao {
             display: none;
             position: absolute;
-            right: 20px;
+            right: -120px;
             bottom: 20px;
             width: 150px;
             height: 120px;
@@ -104,9 +106,16 @@
             box-shadow: 2px 2px 0px #1e293b;
         }
         #btn-acao1 { bottom: 0; left: 0; }
-        #btn-acao2 { bottom: 45px; left: 35px; } /* Em cima e um pouco para a direita */
+        #btn-acao2 { bottom: 45px; left: 35px; }
 
         .btn-dpad:active, .btn-acao:active { background-color: #64748b; }
+
+        /* Ajustes responsivos para telas menores (celular) */
+        @media (max-width: 900px) {
+            #dpad { left: 20px; bottom: 20px; }
+            #paineis-acao { right: 20px; bottom: 20px; }
+            #painel-status { left: 5px; font-size: 14px; }
+        }
     </style>
 </head>
 <body>
@@ -118,7 +127,7 @@
             <div>VIDAS: <span id="txt-vidas">3</span></div>
         </div>
 
-        <canvas id="gameCanvas" width="650" height="380"></canvas>
+        <canvas id="gameCanvas" width="850" height="480"></canvas>
         
         <div id="dpad">
             <div class="btn-dpad" id="btn-up">▲</div>
