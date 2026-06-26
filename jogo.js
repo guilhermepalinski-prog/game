@@ -24,7 +24,7 @@ let upgrades = {
     alcance: false
 };
 
-// Configurações Básicas de Combate (Velocidade ligeiramente ajustada para desvios rápidos)
+// Configurações Básicas de Combate
 let jogador = { x: 25, y: 25, tamanho: 14, cor: "#fadb14", velocidade: 4.0 };
 let objetivo = { x: 805, y: 415, tamanho: 25 };
 let ataqueAtivo = false;
@@ -45,27 +45,22 @@ const niveis = [];
 for (let i = 0; i < 25; i++) {
     let paredesLocais = [];
     let perigosLocais = [];
-    let tipoNivel = i % 4; // 4 variações estruturais de mapas repetidas progressivamente
+    let tipoNivel = i % 4; 
 
-    // --- VARIANTES DE MAPAS ---
     if (tipoNivel === 0) {
-        // Labirinto em Grade Vertical Ultra Apertada
         for (let w = 120; w < 800; w += 140) {
             paredesLocais.push({ x: w, y: (w % 3 === 0) ? 0 : 100, w: 40, h: 360 });
         }
     } else if (tipoNivel === 1) {
-        // Linhas Horizontais Consecutivas (Estilo serpentina sufocante)
         paredesLocais.push({ x: 0, y: 90, w: 730, h: 40 });
         paredesLocais.push({ x: 120, y: 200, w: 730, h: 40 });
         paredesLocais.push({ x: 0, y: 310, w: 730, h: 40 });
     } else if (tipoNivel === 2) {
-        // O Funil Espiral Central
         paredesLocais.push({ x: 100, y: 100, w: 650, h: 40 });
         paredesLocais.push({ x: 100, y: 140, w: 40, h: 220 });
         paredesLocais.push({ x: 140, y: 320, w: 550, h: 40 });
         paredesLocais.push({ x: 650, y: 180, w: 40, h: 150 });
     } else {
-        // Pilares Desconectados Caóticos
         for (let px = 150; px < 800; px += 160) {
             for (let py = 60; py < 400; py += 150) {
                 paredesLocais.push({ x: px, y: py, w: 50, h: 50 });
@@ -73,40 +68,30 @@ for (let i = 0; i < 25; i++) {
         }
     }
 
-    // --- MULTIPLICAÇÃO DRÁSTICA DE INIMIGOS (Aumenta conforme o nível progride) ---
-    let totalInimigos = 6 + Math.floor(i * 1.5); // Começa com 6 inimigos e termina com mais de 40 ativos simultâneos
-    
+    // MULTIPLICAÇÃO MASSIVA DE INIMIGOS
+    let totalInimigos = 6 + Math.floor(i * 1.5); 
     for (let k = 0; k < totalInimigos; k++) {
         let posX = 150 + (k * 45) % 600;
         let posY = 50 + (k * 35) % 360;
         
-        // Padrões alternados de movimentação para os enxames
         let dirX = (k % 2 === 0) ? (4 + (i * 0.15)) : 0;
         let dirY = (k % 2 !== 0) ? (4 + (i * 0.15)) : 0;
         
-        // Níveis mais altos ganham inimigos velozes que andam em diagonal livre
         if (i > 10 && k % 3 === 0) {
             dirX = 3.5 + (i * 0.1);
             dirY = 3.5 + (i * 0.1);
         }
 
-        // Variabilidade de cores e propriedades dos perigos
         let corPerigo = "#e53e3e";
-        if (k % 3 === 1) corPerigo = "#3182ce"; // Azuis velozes
-        if (i > 15 && k % 4 === 0) corPerigo = "rgba(239, 68, 68, 0.25)"; // Fantasmas Semi-Invisíveis
+        if (k % 3 === 1) corPerigo = "#3182ce"; 
+        if (i > 15 && k % 4 === 0) corPerigo = "rgba(239, 68, 68, 0.25)"; 
 
         perigosLocais.push({
-            x: posX,
-            y: posY,
-            w: 16,
-            h: 16, // Tamanho reduzido para caber mais inimigos sem trancar o mapa completamente
-            vx: dirX,
-            vy: dirY,
-            cor: corPerigo
+            x: posX, y: posY, w: 16, h: 16,
+            vx: dirX, vy: dirY, cor: corPerigo
         });
     }
 
-    // 3 Moedas por Nível
     let moedasLocais = [
         { id: 0, x: 180 + (i * 22) % 120, y: 60 + (i * 14) % 200, coletada: false, tamanho: 10 },
         { id: 1, x: 390 + (i * 11) % 150, y: 220 + (i * 27) % 160, coletada: false, tamanho: 10 },
@@ -116,7 +101,6 @@ for (let i = 0; i < 25; i++) {
     niveis.push({ paredes: paredesLocais, perigos: perigosLocais, moedas: moedasLocais });
 }
 
-// Gatilho e spawn do Boss (Níveis 5, 10, 15, 20 e 25)
 function checarEGerarBoss() {
     tirosBoss = [];
     const n = levelAtual + 1;
@@ -126,7 +110,7 @@ function checarEGerarBoss() {
             x: 395, y: 200, w: 65, h: 65,
             vidaMax: vidaBoss, vida: vidaBoss,
             timerTiro: 0,
-            intervaloTiro: Math.max(12, 50 - n) // Padrões de tiros absurdamente velozes em leveis avançados
+            intervaloTiro: Math.max(12, 50 - n)
         };
     } else {
         bossAtual = null;
@@ -149,7 +133,6 @@ function configurarBotao(id, direcao) {
     btn.addEventListener("pointerleave", (e) => { e.preventDefault(); toques[direcao] = false; });
 }
 
-// Botões de Ações de Menu e Combate
 document.getElementById("btn-acao1").addEventListener("pointerdown", (e) => {
     e.preventDefault();
     if (upgrades.espada && !ataqueAtivo && !jogoPausado) {
@@ -286,11 +269,9 @@ function atualizar() {
 
     const lvl = niveis[levelAtual];
 
-    // Moedas Estáticas
     lvl.moedas.forEach(m => {
         if (!m.coletada) {
-            if (jogador.x < m.x + m.tamanho && jogador.x + jogador.tamanho > m.x && jogador.y < m.y + m.tamanho && ...
-                jogador.y + jogador.tamanho > m.y) {
+            if (jogador.x < m.x + m.tamanho && jogador.x + jogador.tamanho > m.x && jogador.y < m.y + m.tamanho && jogador.y + jogador.tamanho > m.y) {
                 m.coletada = true;
                 moedasGlobais++;
                 atualizarInterfaceTexto();
@@ -298,7 +279,6 @@ function atualizar() {
         }
     });
 
-    // Movimento e detecção de enxames de inimigos normais
     lvl.perigos.forEach(p => {
         if (jogador.x < p.x + p.w && jogador.x + jogador.tamanho > p.x && jogador.y < p.y + p.h && jogador.y + jogador.tamanho > p.y) {
             resetJogador();
@@ -307,11 +287,9 @@ function atualizar() {
         if(p.vx) p.x += p.vx;
         if(p.vy) p.y += p.vy;
 
-        // Rebater nas paredes ou bordas
         if (p.x < 0 || p.x > canvas.width - p.w) p.vx *= -1;
         if (p.y < 0 || p.y > canvas.height - p.h) p.vy *= -1;
         
-        // Colisão extra física com as barreiras internas para criar padrões caóticos
         lvl.paredes.forEach(par => {
             if (p.x < par.x + par.w && p.x + p.w > par.x && p.y < par.y + par.h && p.y + p.h > par.y) {
                 if(p.vx) p.vx *= -1;
@@ -320,12 +298,10 @@ function atualizar() {
         });
     });
 
-    // Padrão de Tiros do Boss
     if (bossAtual) {
         bossAtual.timerTiro++;
         if (bossAtual.timerTiro >= bossAtual.intervaloTiro) {
             bossAtual.timerTiro = 0;
-            // 8 Ângulos de tiro explosivos simultâneos
             let angulos = [0, Math.PI/4, Math.PI/2, 3*Math.PI/4, Math.PI, 5*Math.PI/4, 3*Math.PI/2, 7*Math.PI/4];
             angulos.forEach(ang => {
                 tirosBoss.push({
@@ -338,20 +314,17 @@ function atualizar() {
             });
         }
 
-        if (jogador.x < bossAtual.x + bossAtual.w && jogador.x + jogador.tamanho > bossAtual.x &&
-            jogador.y < bossAtual.y + bossAtual.h && jogador.y + jogador.tamanho > bossAtual.y) {
+        if (jogador.x < bossAtual.x + bossAtual.w && jogador.x + jogador.tamanho > bossAtual.x && jogador.y < bossAtual.y + bossAtual.h && jogador.y + jogador.tamanho > bossAtual.y) {
             resetJogador();
         }
     }
 
-    // Processamento de projéteis ativos
     for (let t = tirosBoss.length - 1; t >= 0; t--) {
         let tiro = tirosBoss[t];
         tiro.x += tiro.vx;
         tiro.y += tiro.vy;
 
-        if (jogador.x < tiro.x + tiro.tamanho && jogador.x + jogador.tamanho > tiro.x &&
-            jogador.y < tiro.y + tiro.tamanho && jogador.y + jogador.tamanho > tiro.y) {
+        if (jogador.x < tiro.x + tiro.tamanho && jogador.x + jogador.tamanho > tiro.x && jogador.y < tiro.y + tiro.tamanho && jogador.y + jogador.tamanho > tiro.y) {
             resetJogador();
             break;
         }
@@ -361,7 +334,6 @@ function atualizar() {
         }
     }
 
-    // Condição de vitória no portal de chegada
     if (!bossAtual) {
         if (jogador.x < objetivo.x + objetivo.tamanho && jogador.x + jogador.tamanho > objetivo.x && jogador.y < objetivo.y + objetivo.tamanho && jogador.y + jogador.tamanho > objetivo.y) {
             if (levelAtual < niveis.length - 1) {
@@ -384,7 +356,6 @@ function atualizar() {
 function desenhar() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    // Fundo Estrelado
     ctx.fillStyle = "#ffffff";
     estrelas.forEach(star => {
         ctx.beginPath();
@@ -394,11 +365,9 @@ function desenhar() {
 
     const lvl = niveis[levelAtual];
 
-    // Paredes do Labirinto
     ctx.fillStyle = "#1e293b";
     lvl.paredes.forEach(p => ctx.fillRect(p.x, p.y, p.w, p.h));
 
-    // Moedas
     lvl.moedas.forEach(m => {
         if (!m.coletada) {
             ctx.fillStyle = "#eab308";
@@ -406,15 +375,12 @@ function desenhar() {
         }
     });
 
-    // Enxame de Perigos
     lvl.perigos.forEach(p => { ctx.fillStyle = p.cor; ctx.fillRect(p.x, p.y, p.w, p.h); });
 
-    // Boss de Fase
     if (bossAtual) {
         ctx.fillStyle = "#a855f7";
         ctx.fillRect(bossAtual.x, bossAtual.y, bossAtual.w, bossAtual.h);
         
-        // Barra de saúde
         ctx.fillStyle = "#1f2937";
         ctx.fillRect(bossAtual.x, bossAtual.y - 12, bossAtual.w, 5);
         ctx.fillStyle = "#ef4444";
@@ -422,11 +388,9 @@ function desenhar() {
         ctx.fillRect(bossAtual.x, bossAtual.y - 12, larguraVida, 5);
     }
 
-    // Tiros na tela
     ctx.fillStyle = "#ec4899";
     tirosBoss.forEach(t => { ctx.beginPath(); ctx.arc(t.x, t.y, t.tamanho, 0, Math.PI*2); ctx.fill(); });
 
-    // Ponto de Saída Verde
     if (!bossAtual) {
         ctx.fillStyle = "#10b981";
         ctx.fillRect(objetivo.x, objetivo.y, objetivo.tamanho, objetivo.tamanho);
@@ -434,7 +398,6 @@ function desenhar() {
         ctx.strokeRect(objetivo.x + 3, objetivo.y + 3, objetivo.tamanho - 6, objetivo.tamanho - 6);
     }
 
-    // Efeito Visual de Golpe
     if (ataqueAtivo && upgrades.espada) {
         let rCorte = upgrades.alcance ? 55 : 35;
         ctx.strokeStyle = "rgba(14, 165, 233, 0.8)";
@@ -444,7 +407,6 @@ function desenhar() {
         ctx.stroke();
     }
 
-    // Personagem e Olhinhos
     ctx.fillStyle = jogador.cor;
     ctx.fillRect(jogador.x, jogador.y, jogador.tamanho, jogador.tamanho);
     ctx.fillStyle = "#000";
